@@ -1,10 +1,15 @@
 package animalDex.dex.service;
 
 import animalDex.dex.DTOs.CreateUserDTO;
+import animalDex.dex.exceptions.AnimalDexException;
+import animalDex.dex.exceptions.UserAuthentificationException;
 import animalDex.dex.model.User;
 import animalDex.dex.repository.UserRepository;
 import animalDex.dex.security.BcryptManager;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -18,7 +23,14 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-
+    public User Login(String username, String password) throws Exception {
+         User foundUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserAuthentificationException("Usuário não encontrado.", HttpStatus.NOT_FOUND));
+        if(!bcryptManager.VerifyPasswordMatches(password, foundUser.getPassword())){
+            throw new UserAuthentificationException("Senha incorreta", HttpStatus.UNAUTHORIZED);
+        }
+        return foundUser;
+    }
 
     public void CreateNewUser(CreateUserDTO dto) {
         if(dto.username().length() < 4){

@@ -38,9 +38,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse Login(@RequestBody LoginRequest request){
+    public LoginResponse Login(@RequestBody LoginRequest request) throws Exception {
 
-        User user = userService.GetUserByUsername(request.username());
+        User user = userService.Login(request.username(), request.password());
 
         String token = jwtService.GenerateToken(user);
 

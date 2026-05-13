@@ -1,5 +1,6 @@
 package animalDex.dex.service;
 
+import animalDex.dex.exceptions.AIResponseException;
 import animalDex.dex.exceptions.AnimalNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import com.google.genai.Client;
@@ -9,8 +10,8 @@ import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -62,10 +63,27 @@ public class GeminiService {
             throw new AnimalNotFoundException("Animal não encontrado.", HttpStatus.EXPECTATION_FAILED);
         }
         String json = ExtractJSON(rawResponse.text());
-        return mapper.readTree(json).path("scientificName").asText();
+
+        JsonNode node;
+        try {
+            node = mapper.readTree(json);
+        } catch (Exception e) {
+            throw new AIResponseException("JSON retornado pela IA é inválido: " + json, HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        String scientificName = node.path("scientificName").asText();
+        if (scientificName.isBlank()) {
+            throw new AIResponseException("IA não retornou nome científico.", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        return scientificName;
     }
 
     public String GetSpeciesJSON(String scientificName) {
+
+        if (scientificName == null || scientificName.isBlank()) {
+            throw new IllegalArgumentException("Nome científico não pode ser vazio.");
+        }
 
         String prompt = """
         You are an API that ONLY returns valid raw JSON.
@@ -108,24 +126,42 @@ public class GeminiService {
         }
         """;
 
-        GenerateContentResponse rawResponse =
-                client.models.generateContent(
-                        aiModel,
-                        Content.fromParts(
-                                Part.fromText(prompt),
-                                Part.fromText("Scientific name: " + scientificName)
-                        ),
-                        config
-                );
+        GenerateContentResponse rawResponse;
+
+        try {
+            rawResponse = client.models.generateContent(
+                    aiModel,
+                    Content.fromParts(
+                            Part.fromText(prompt),
+                            Part.fromText("Scientific name: " + scientificName)
+                    ),
+                    config
+            );
+        } catch (Exception e) {
+            throw new AIResponseException("Falha ao comunicar com a IA: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        if (rawResponse == null || rawResponse.text() == null || rawResponse.text().isBlank()) {
+            throw new AIResponseException("Resposta nula da IA.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
         String cleanJson = ExtractJSON(rawResponse.text());
+
+        try {
+            mapper.readTree(cleanJson);
+        } catch (Exception e) {
+            throw new AIResponseException("JSON retornado pela IA é inválido: " + cleanJson, HttpStatus.BAD_GATEWAY);
+        }
+
         return cleanJson;
     }
 
     private String ExtractJSON(String rawText) {
-        String raw = rawText.trim();
+        if(rawText == null || rawText.isBlank()){
+            throw new AIResponseException("Erro ao analisar resposta.", HttpStatus.NOT_ACCEPTABLE);
+        }
 
-        raw = raw
+        String raw = rawText.trim()
                 .replaceAll("(?s)```json\\s*", "")
                 .replaceAll("(?s)```\\s*", "")
                 .trim();
@@ -133,10 +169,10 @@ public class GeminiService {
         int start = raw.indexOf("{");
         int end = raw.lastIndexOf("}");
 
-        if(start != -1 && end != -1 && end > start){
-            return raw.substring(start, end + 1);
+        if(start == -1 || end == -1 || end <= start){
+            throw new AIResponseException("Resposta IA naão contem um JSON válido", HttpStatus.NOT_ACCEPTABLE);
         }
 
-        return raw;
+        return raw.substring(start, end + 1);
     }
 }
