@@ -1,2 +1,4 @@
 # AnimalDex
-O app ainda está em desenvolvimento, na versão alfa disponibilizarei um readme
+AnimalDex é um aplicativo voltado para a natureza e para quem tem curiosidade pelo mundo animal. Sua principal funcionalidade é o reconhecimento de espécies por foto: basta tirar uma imagem de um animal para receber instantaneamente informações detalhadas sobre ele, como nome científico, habitat, peso, tamanho, dieta e nível de raridade — definido com base na dificuldade de encontrar aquela espécie na natureza.
+Além do reconhecimento, o AnimalDex conta com um sistema completo de engajamento: os usuários acumulam pontos a cada descoberta, que podem ser trocados em uma loja exclusiva do app. Desafios diários e semanais incentivam a exploração contínua, enquanto medalhas e insígnias celebram as conquistas ao longo da jornada.
+O aplicativo está atualmente em fase de desenvolvimento, com muito mais por vir.
