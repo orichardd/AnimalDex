@@ -64,15 +64,33 @@ public class ImageProcessService {
     );
 
     //primeiros 3 bytes do arquivo que realmente dizem que tipo ele é
-    private void ValidateMagicBytes(MultipartFile file) throws ImageProcessingException, IOException {
+    private void ValidateMagicBytes(MultipartFile file) throws ImageProcessingException {
+
         byte[] expectedMagic = MAGIC_BYTES.get(file.getContentType());
+
+        // Defesa extra: se por algum motivo chegou aqui com tipo não mapeado
+        if (expectedMagic == null) {
+            throw new ImageProcessingException(
+                    "Tipo de arquivo não suportado.",
+                    HttpStatus.UNSUPPORTED_MEDIA_TYPE
+            );
+        }
+
         byte[] headerBytes = new byte[expectedMagic.length];
 
         try (InputStream is = file.getInputStream()) {
             int bytesRead = is.read(headerBytes);
             if (bytesRead < expectedMagic.length) {
-                throw new ImageProcessingException("Arquivo corrompido ou incompleto.", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+                throw new ImageProcessingException(
+                        "Arquivo corrompido ou incompleto.",
+                        HttpStatus.UNPROCESSABLE_ENTITY
+                );
             }
+        } catch (IOException e) {
+            throw new ImageProcessingException(
+                    "Erro ao ler o arquivo.",
+                    HttpStatus.UNPROCESSABLE_ENTITY
+            );
         }
 
         for (int i = 0; i < expectedMagic.length; i++) {

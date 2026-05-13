@@ -1,10 +1,12 @@
 package animalDex.dex.service;
 
+import animalDex.dex.exceptions.JSONException;
 import animalDex.dex.model.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -66,6 +68,9 @@ public class JWTService {
     }
 
     public static String GetTokenByHeader(String token){
+        if(token == null || token.isBlank() || token.length() <= 7){
+            throw new JSONException("JSON inválido", HttpStatus.CONFLICT);
+        }
         return token.substring(7);
     }
 

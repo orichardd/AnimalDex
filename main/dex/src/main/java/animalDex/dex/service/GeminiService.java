@@ -2,12 +2,9 @@ package animalDex.dex.service;
 
 import animalDex.dex.exceptions.AIResponseException;
 import animalDex.dex.exceptions.AnimalNotFoundException;
+import com.google.genai.types.*;
 import org.springframework.beans.factory.annotation.Value;
 import com.google.genai.Client;
-import com.google.genai.types.Content;
-import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Part;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,7 +30,12 @@ public class GeminiService {
 
     public GeminiService(ObjectMapper mapper, @Value("${gemini.api.key}") String apiKey) {
         this.mapper = mapper;
-        this.client = Client.builder().apiKey(apiKey).build();
+        this.client = Client.builder()
+                .apiKey(apiKey)
+                .httpOptions(HttpOptions.builder()
+                        .timeout(30) //tempo maximo de resposta
+                        .build())
+                .build();
     }
     public String GetSpeciesName(byte[] file) throws IOException {
         String prompt = """
@@ -51,14 +53,21 @@ public class GeminiService {
 
         String mimeType = "image/jpeg";
 
-        GenerateContentResponse rawResponse =
-                client.models.generateContent(
-                        aiModel,
-                        Content.fromParts(
-                                Part.fromText(prompt),
-                                Part.fromBytes(file, mimeType)
-                        ),
-                        config);
+        GenerateContentResponse rawResponse;
+        try {
+            rawResponse = client.models.generateContent(
+                    aiModel,
+                    Content.fromParts(
+                            Part.fromText(prompt),
+                            Part.fromBytes(file, mimeType)
+                    ),
+                    config);
+        } catch (Exception e) {
+            throw new AIResponseException(
+                    "Falha ao comunicar com a IA: " + e.getMessage(),
+                    HttpStatus.BAD_GATEWAY
+            );
+        }
         if(rawResponse == null || rawResponse.text() == null || rawResponse.text().isBlank() || Objects.equals(rawResponse.text(), "none")){
             throw new AnimalNotFoundException("Animal não encontrado.", HttpStatus.EXPECTATION_FAILED);
         }
@@ -138,7 +147,10 @@ public class GeminiService {
                     config
             );
         } catch (Exception e) {
-            throw new AIResponseException("Falha ao comunicar com a IA: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new AIResponseException(
+                    "Falha ao comunicar com a IA: " + e.getMessage(),
+                    HttpStatus.BAD_GATEWAY
+            );
         }
 
         if (rawResponse == null || rawResponse.text() == null || rawResponse.text().isBlank()) {
