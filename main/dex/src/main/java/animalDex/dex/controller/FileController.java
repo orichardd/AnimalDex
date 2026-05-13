@@ -36,7 +36,7 @@ public class FileController {
             ) throws Exception {
         String token = GetTokenByHeader(header);
         String username = jWTService.ExtractUsername(token);
-        MultipartFile image = imageProcessService.ProcessImage(file); //arrumar amanhã, ou fazer retornar multipart file, ou fazer a outra função aceitar byte[]
+        byte[] image = imageProcessService.ProcessImage(file); //arrumar amanhã, ou fazer retornar multipart file, ou fazer a outra função aceitar byte[]
         String jsonResponse = animalService.GetAnimal(image, username);
         return ResponseEntity.ok(jsonResponse);
     }

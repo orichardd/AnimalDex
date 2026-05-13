@@ -31,7 +31,7 @@ public class AnimalService {
         this.captureService = captureService;
     }
 
-    public String GetAnimal(MultipartFile file, String username) throws IOException {
+    public String GetAnimal(byte[] file, String username) throws IOException {
         User user = userService.GetUserByUsername(username);
         if(user == null){
             throw new IllegalArgumentException("User not found");

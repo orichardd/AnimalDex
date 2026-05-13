@@ -1,16 +1,19 @@
 package animalDex.dex.service;
 
+import animalDex.dex.exceptions.AnimalNotFoundException;
 import org.springframework.beans.factory.annotation.Value;
 import com.google.genai.Client;
 import com.google.genai.types.Content;
 import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.util.Objects;
 
 @Service
 public class GeminiService {
@@ -31,7 +34,7 @@ public class GeminiService {
         this.mapper = mapper;
         this.client = Client.builder().apiKey(apiKey).build();
     }
-    public String GetSpeciesName(MultipartFile file) throws IOException {
+    public String GetSpeciesName(byte[] file) throws IOException {
         String prompt = """
                 Identify the animal in the image. I need the full species name
                 Return ONLY valid JSON.
@@ -40,29 +43,26 @@ public class GeminiService {
                     "scientificName": "Vulpes vulpes"
                 }
                 if you couldn't identify it or there is no animal, return:
-                {
-                    "scientificName": "none"
-                }
+                "none"
                 """;
 
-        byte[] imageBytes = file.getBytes();
+        //byte[] imageBytes = file.getBytes();
 
-        String mimeType = file.getContentType();
+        String mimeType = "image/jpeg";
 
         GenerateContentResponse rawResponse =
                 client.models.generateContent(
                         aiModel,
                         Content.fromParts(
                                 Part.fromText(prompt),
-                                Part.fromBytes(imageBytes, mimeType)
+                                Part.fromBytes(file, mimeType)
                         ),
                         config);
-        if(rawResponse == null || rawResponse.text() == null || rawResponse.text().isBlank()){
-            return null;
+        if(rawResponse == null || rawResponse.text() == null || rawResponse.text().isBlank() || Objects.equals(rawResponse.text(), "none")){
+            throw new AnimalNotFoundException("Animal não encontrado.", HttpStatus.EXPECTATION_FAILED);
         }
         String json = ExtractJSON(rawResponse.text());
-        String scientificName = mapper.readTree(json).path("scientificName").asText();
-        return scientificName;
+        return mapper.readTree(json).path("scientificName").asText();
     }
 
     public String GetSpeciesJSON(String scientificName) {

@@ -1,5 +1,7 @@
 package animalDex.dex.service;
 
+import animalDex.dex.exceptions.ImageProcessingException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,12 +20,11 @@ import java.util.Set;
 @Service
 public class ImageProcessService {
 
-    private Integer maxFileSize = 10485760; // colocar como ambient depois
+    private Integer maxFileSize = 10 * 1024 * 1024; // colocar como ambient depois *
 
     private static final int TARGET_BORDERS = 1024;
     private static final float JPEG_QUALITY = 0.85f;
 
-    //tipos possiveis de arquivo
     private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
         "image/jpeg" //front já transforma os outros tipos
     );
@@ -38,23 +39,23 @@ public class ImageProcessService {
         return ResizeIfNeeded(image);
     }
 
-    private void ValidateFileEmpty(MultipartFile file) throws Exception {
+    private void ValidateFileEmpty(MultipartFile file) throws ImageProcessingException {
         if(file == null || file.isEmpty()){
-            throw new Exception("Arquivo vazio");
+            throw new ImageProcessingException("Arquivo vazio", HttpStatus.NOT_ACCEPTABLE);
         }
     }
 
-    private void ValidateFileSize(MultipartFile file) throws Exception{
+    private void ValidateFileSize(MultipartFile file) throws ImageProcessingException{
         if(file.getSize() > maxFileSize){
-            throw new Exception("Arquivo muito grande, tamanho maximo de %d bits".formatted(maxFileSize));
+            throw new ImageProcessingException("Arquivo muito grande, tamanho maximo de %d bits".formatted(maxFileSize), HttpStatus.LENGTH_REQUIRED);
         }
     }
 
-    private void ValidateMimeType(MultipartFile file) throws  Exception{
+    private void ValidateMimeType(MultipartFile file) throws  ImageProcessingException{
         String contentType = file.getContentType();
 
         if(!(ALLOWED_MIME_TYPES.contains(contentType))){
-            throw  new Exception("Tipo de arquivo não suportado.");
+            throw  new ImageProcessingException("Tipo de arquivo não suportado.", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
         }
     }
 
@@ -63,38 +64,39 @@ public class ImageProcessService {
     );
 
     //primeiros 3 bytes do arquivo que realmente dizem que tipo ele é
-    private void ValidateMagicBytes(MultipartFile file) throws Exception {
+    private void ValidateMagicBytes(MultipartFile file) throws ImageProcessingException, IOException {
         byte[] expectedMagic = MAGIC_BYTES.get(file.getContentType());
         byte[] headerBytes = new byte[expectedMagic.length];
 
         try (InputStream is = file.getInputStream()) {
             int bytesRead = is.read(headerBytes);
             if (bytesRead < expectedMagic.length) {
-                throw new Exception("Arquivo corrompido ou incompleto.");
+                throw new ImageProcessingException("Arquivo corrompido ou incompleto.", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
             }
         }
 
         for (int i = 0; i < expectedMagic.length; i++) {
             if (headerBytes[i] != expectedMagic[i]) {
-                throw new Exception(
-                        "O conteúdo do arquivo não corresponde ao tipo declarado."
+                throw new ImageProcessingException(
+                        "O conteúdo do arquivo não corresponde ao tipo declarado.",
+                        HttpStatus.UNSUPPORTED_MEDIA_TYPE
                 );
             }
         }
     }
 
     //le a imagem pra ver se nao ta corrompida nem nada
-    private BufferedImage ValidateAndReadImage(MultipartFile file) throws Exception {
+    private BufferedImage ValidateAndReadImage(MultipartFile file) throws ImageProcessingException {
         BufferedImage image;
 
         try (InputStream is = file.getInputStream()) {
             image = ImageIO.read(is);
         } catch (IOException e) {
-            throw new Exception("Não foi possível ler a imagem.");
+            throw new ImageProcessingException("Não foi possível ler a imagem.", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
         }
 
         if (image == null) {
-            throw new Exception("Imagem corrompida ou formato inválido.");
+            throw new ImageProcessingException("Imagem corrompida ou formato inválido.", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
         }
 
         return image;
