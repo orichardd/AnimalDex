@@ -39,7 +39,7 @@ public class GeminiService {
                 {
                     "scientificName": "Vulpes vulpes"
                 }
-                if there is no animal, return:
+                if you couldn't identify it or there is no animal, return:
                 {
                     "scientificName": "none"
                 }

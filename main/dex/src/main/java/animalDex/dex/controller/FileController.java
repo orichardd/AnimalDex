@@ -2,6 +2,7 @@ package animalDex.dex.controller;
 
 import animalDex.dex.service.AnimalService;
 import animalDex.dex.service.GeminiService;
+import animalDex.dex.service.ImageProcessService;
 import animalDex.dex.service.JWTService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -20,20 +21,23 @@ public class FileController {
 
     private final AnimalService animalService;
     private final JWTService jWTService;
+    private final ImageProcessService imageProcessService;
 
-    public FileController(AnimalService animalService, JWTService jWTService) {
+    public FileController(AnimalService animalService, JWTService jWTService, ImageProcessService imageProcessService) {
         this.animalService = animalService;
         this.jWTService = jWTService;
+        this.imageProcessService = imageProcessService;
     }
 
     @PostMapping(consumes = {MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<?> Upload(
             @Validated @RequestParam("file")MultipartFile file,
             @RequestHeader("authorization")String header
-            ) throws IOException {
+            ) throws Exception {
         String token = GetTokenByHeader(header);
         String username = jWTService.ExtractUsername(token);
-        String jsonResponse = animalService.GetAnimal(file, username);
+        MultipartFile image = imageProcessService.ProcessImage(file); //arrumar amanhã, ou fazer retornar multipart file, ou fazer a outra função aceitar byte[]
+        String jsonResponse = animalService.GetAnimal(image, username);
         return ResponseEntity.ok(jsonResponse);
     }
 
