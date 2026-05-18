@@ -3,6 +3,35 @@ import { colors, globalScale, globalStyles } from "@/style/Global";
 import  IField, { InputPasswordField } from "./inputField";
 import LoginButton from "./LoginButton";
 import LoginTop from "./LoginTop";
+import { router } from "expo-router";
+import { login, register } from "@/services/auth";
+
+async function Enter(){
+    try {
+        console.log("entrou")
+        await login("username", "password");
+        router.replace("/");
+    } catch (e: unknown) {
+        // narrow unknown to any to safely access properties from potential Axios error
+        const err: any = e;
+        console.log("Error URL:", err?.config?.url);
+        console.log("Error status:", err?.response?.status);
+        console.log("Error data:", err?.response?.data);
+    }
+}
+
+async function CreateAccount(){
+    try {
+        await register("username", "password");
+        router.replace("/");
+    } catch (e: unknown) {
+        // narrow unknown to any to safely access properties from potential Axios error
+        const err: any = e;
+        console.log("Error URL:", err?.config?.url);
+        console.log("Error status:", err?.response?.status);
+        console.log("Error data:", err?.response?.data);
+    }
+}
 
 export default function LoginSection() {
     return (
@@ -11,8 +40,8 @@ export default function LoginSection() {
             <IField placeholder="username" onChangeText={undefined} style={styles.IField} imageSource={require('../../../../assets/images/icons/user_pic.png')} />
             <InputPasswordField placeholder="password" onChangeText={undefined} style={styles.IField} imageSource={require('../../../../assets/images/icons/password_lock.png')} />
             <Text style={styles.esqueci}>esqueceu sua senha?</Text>
-            <LoginButton buttonStyle={styles.LoginButton} onPress={undefined} title="Entrar" buttonTextStyle={styles.LoginButtonText} />
-            <LoginButton buttonStyle={styles.SigInButton} onPress={undefined} title="Cadastrar" buttonTextStyle={styles.SigInButtonText} />
+            <LoginButton buttonStyle={styles.LoginButton} onPress={Enter} title="Entrar" buttonTextStyle={styles.LoginButtonText} />
+            <LoginButton buttonStyle={styles.SigInButton} onPress={CreateAccount} title="Cadastrar" buttonTextStyle={styles.SigInButtonText} />
         </View>
     );
 }
@@ -27,7 +56,7 @@ const styles = StyleSheet.create({
     },
     esqueci: {
         color: colors.green_strong,
-        width: globalScale.screenWidth,
+        width: `${globalScale.screenWidth2}%`,
         textAlign: 'right',
         marginBottom: 15
     },
@@ -37,14 +66,14 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderRadius: globalScale.outerRadius,
         padding: 10,
-        width: globalScale.screenWidth,
+        width: `${globalScale.screenWidth2}%`,
         height: globalScale.smallContainerHeight,
         marginBottom: 15,
         paddingLeft: 40,
     },
     LoginButton: {
         backgroundColor: colors.green_light,
-        width: globalScale.screenWidth,
+        width: `${globalScale.screenWidth2}%`,
         height: globalScale.smallContainerHeight,
         display: 'flex',
         alignItems: 'center',
@@ -60,7 +89,7 @@ const styles = StyleSheet.create({
     },
     SigInButton: {
         backgroundColor: colors.brown_light,
-        width: globalScale.screenWidth,
+        width: `${globalScale.screenWidth2}%`,
         height: globalScale.smallContainerHeight,
         display: 'flex',
         alignItems: 'center',

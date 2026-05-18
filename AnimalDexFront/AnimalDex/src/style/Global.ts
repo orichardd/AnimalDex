@@ -14,6 +14,7 @@ export const colors = {
 
 export const globalScale = {
     screenWidth: '85%',
+    screenWidth2: 85,
     smallContainerHeight: 45,
     outerRadius: 10,
 }

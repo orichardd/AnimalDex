@@ -34,6 +34,8 @@ public class FileController {
             @Validated @RequestParam("file")MultipartFile file,
             @RequestHeader("authorization")String header
             ) throws Exception {
+        System.out.println("File size: " + file.getSize());
+        System.out.println("File type: " + file.getContentType());
         String token = GetTokenByHeader(header);
         String username = jWTService.ExtractUsername(token);
         byte[] image = imageProcessService.ProcessImage(file); //arrumar amanhã, ou fazer retornar multipart file, ou fazer a outra função aceitar byte[]

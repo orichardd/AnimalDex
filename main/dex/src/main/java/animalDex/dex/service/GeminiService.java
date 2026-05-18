@@ -33,7 +33,7 @@ public class GeminiService {
         this.client = Client.builder()
                 .apiKey(apiKey)
                 .httpOptions(HttpOptions.builder()
-                        .timeout(30) //tempo maximo de resposta
+                        .timeout(60) //tempo maximo de resposta
                         .build())
                 .build();
     }
@@ -53,6 +53,7 @@ public class GeminiService {
 
         String mimeType = "image/jpeg";
 
+        System.out.println(apiKey);
         GenerateContentResponse rawResponse;
         try {
             rawResponse = client.models.generateContent(
@@ -63,6 +64,7 @@ public class GeminiService {
                     ),
                     config);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new AIResponseException(
                     "Falha ao comunicar com a IA: " + e.getMessage(),
                     HttpStatus.BAD_GATEWAY
