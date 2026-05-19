@@ -4,10 +4,13 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import api from "../../services/api";
+import { useIsFocused } from "@react-navigation/native"; //detectar se a tela está ativa para evitar erros de câmera quando não estiver
+
 
 
 
 export default function Picture({ navigation }) {
+  const isFocused = useIsFocused(); 
   const [facing, setFacing] = useState("back");
   const [flash, setFlash] = useState("off");
   const [permission, requestPermission] = useCameraPermissions();
@@ -30,7 +33,7 @@ export default function Picture({ navigation }) {
         formData.append("file", {
             uri: photo.uri,
             type: "image/jpeg",
-            name: "photo.jpg",
+            name: "photo.jpeg",
         });
 
         try {
@@ -65,10 +68,11 @@ export default function Picture({ navigation }) {
   if (!permission) return <View style={styles.container} />;
 
   return (
+    
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {permission.granted ? (
+      {isFocused && permission.granted ? (
         <CameraView
           ref={cameraRef}
           style={StyleSheet.absoluteFill}

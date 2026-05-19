@@ -5,40 +5,39 @@ import LoginButton from "./LoginButton";
 import LoginTop from "./LoginTop";
 import { router } from "expo-router";
 import { login, register } from "@/services/auth";
-
-async function Enter(){
-    try {
-        console.log("entrou")
-        await login("username", "password");
-        router.replace("/");
-    } catch (e: unknown) {
-        // narrow unknown to any to safely access properties from potential Axios error
-        const err: any = e;
-        console.log("Error URL:", err?.config?.url);
-        console.log("Error status:", err?.response?.status);
-        console.log("Error data:", err?.response?.data);
-    }
-}
-
-async function CreateAccount(){
-    try {
-        await register("username", "password");
-        router.replace("/");
-    } catch (e: unknown) {
-        // narrow unknown to any to safely access properties from potential Axios error
-        const err: any = e;
-        console.log("Error URL:", err?.config?.url);
-        console.log("Error status:", err?.response?.status);
-        console.log("Error data:", err?.response?.data);
-    }
-}
+import { useState } from "react";
 
 export default function LoginSection() {
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+
+    async function Enter() {
+        try {
+            await login(username, password);
+            router.replace("/");
+        } catch (e: unknown) {
+            const err: any = e;
+            console.log("Error status:", err?.response?.status);
+            console.log("Error data:", err?.response?.data);
+        }
+    }
+
+    async function CreateAccount() {
+        try {
+            await register(username, password);
+            router.replace("/");
+        } catch (e: unknown) {
+            const err: any = e;
+            console.log("Error status:", err?.response?.status);
+            console.log("Error data:", err?.response?.data);
+        }
+    }
+
     return (
         <View style={styles.main}>
             <LoginTop />
-            <IField placeholder="username" onChangeText={undefined} style={styles.IField} imageSource={require('../../../../assets/images/icons/user_pic.png')} />
-            <InputPasswordField placeholder="password" onChangeText={undefined} style={styles.IField} imageSource={require('../../../../assets/images/icons/password_lock.png')} />
+            <IField placeholder="username" onChangeText={setUsername} style={styles.IField} imageSource={require('../../../../assets/images/icons/user_pic.png')} />
+            <InputPasswordField placeholder="password" onChangeText={setPassword} style={styles.IField} imageSource={require('../../../../assets/images/icons/password_lock.png')} />
             <Text style={styles.esqueci}>esqueceu sua senha?</Text>
             <LoginButton buttonStyle={styles.LoginButton} onPress={Enter} title="Entrar" buttonTextStyle={styles.LoginButtonText} />
             <LoginButton buttonStyle={styles.SigInButton} onPress={CreateAccount} title="Cadastrar" buttonTextStyle={styles.SigInButtonText} />
@@ -82,6 +81,8 @@ const styles = StyleSheet.create({
         borderColor: colors.green_medium,
         borderWidth: 1,
         marginBottom: 10,
+
+        
     },
     LoginButtonText: {
         color: colors.green_strong,

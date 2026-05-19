@@ -12,6 +12,25 @@ export const colors = {
     brown_outline: '#F3DAAD',
 };
 
+export const rarityColors = {
+    common: "#ABA8A6",
+    rare: "#95BAE9",
+    epic: "#C6A9E7",
+    legendary: "#FFC76E",
+    chromatic: "#EC8DFF",
+    extinct: "#454545",
+}
+
+export const fontSizes = {
+    XXL:40,
+    XL:35,
+    X:30,
+    L:25,
+    G:20,
+    M:15,
+    P:10
+}
+
 export const globalScale = {
     screenWidth: '85%',
     screenWidth2: 85,
